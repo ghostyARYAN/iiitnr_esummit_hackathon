@@ -20,7 +20,7 @@ Parivesh 3.0 is a next-generation unified digital portal designed for the **Chha
 - **EDS System**: Structured communication channel for requesting missing or additional information from proponents.
 
 ### 🤖 AI & Automation
-- **AI-Powered Assistance**: Integrated **Gemini AI** for intelligent chatbot support and content summarization.
+- **AI-Powered Assistance**: Integrated **OpenRouter (Stepfun Step-3.5-Flash Free)** for intelligent chatbot support and content summarization.
 - **Meeting Intelligence**: **Fireflies.ai** integration for automated meeting transcription and gist generation.
 - **Automated Notifications**: Email alerts for status changes, EDS requests, and meeting schedules.
 
@@ -39,7 +39,7 @@ Parivesh 3.0 is a next-generation unified digital portal designed for the **Chha
 - **UI Framework**: [Tailwind CSS](https://tailwindcss.com/), [Shadcn UI](https://ui.shadcn.com/)
 - **State Management**: React Query (TanStack Query), Context API
 - **Backend & Database**: [Supabase](https://supabase.com/) (PostgreSQL, Auth, Storage, Edge Functions)
-- **AI Services**: Google Gemini API, Fireflies.ai
+- **AI Services**: OpenRouter, Fireflies.ai
 - **Maps**: React Leaflet
 - **Utilities**: `jspdf` & `docx` for document generation
 
@@ -100,7 +100,7 @@ d:\iiitnr_esummit\Project Repo
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
    FIREFLIES_API_KEY=your_fireflies_key
-   VITE_GEMINI_API_KEY=your_gemini_key
+   VITE_OPENROUTER_API_KEY=your_openrouter_key
    ```
 
 4. **Run Development Server**

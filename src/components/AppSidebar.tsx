@@ -117,9 +117,12 @@ export function AppSidebar() {
       <SidebarContent>
         {/* Logo */}
         <SidebarGroup>
-          <div className="flex items-center gap-3 px-3 py-5">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-sm">
-              <Leaf className="h-5 w-5 text-primary-foreground" />
+          <div className={`flex items-center gap-3 ${collapsed ? "justify-center px-2 py-4" : "px-3 py-5"}`}>
+            <div
+              className={`${collapsed ? "w-8 h-8" : "w-9 h-9"} rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-sm`}
+              title="Parivesh 3.0"
+            >
+              <Leaf className={`${collapsed ? "h-4 w-4" : "h-5 w-5"} text-primary-foreground`} />
             </div>
             {!collapsed && (
               <span className="font-extrabold text-foreground text-lg tracking-tight">Parivesh 3.0</span>
@@ -137,14 +140,14 @@ export function AppSidebar() {
               <SidebarMenu>
                 {group.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton asChild tooltip={t(item.title)}>
                       <NavLink
                         to={item.url}
                         end={item.url === "/dashboard"}
-                        className="group/nav flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        className="group/nav flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center"
                         activeClassName="!bg-primary !text-primary-foreground shadow-sm font-semibold"
                       >
-                        <item.icon className="h-[18px] w-[18px] shrink-0" />
+                        <item.icon className="shrink-0" />
                         {!collapsed && (
                           <span className="flex items-center gap-2 flex-1">
                             {t(item.title)}
@@ -174,9 +177,10 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={toggleLanguage}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  tooltip={i18n.language === "en" ? "हिन्दी" : "English"}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center"
                 >
-                  <Languages className="h-[18px] w-[18px]" />
+                  <Languages className="shrink-0" />
                   {!collapsed && <span>{i18n.language === "en" ? "हिन्दी" : "English"}</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -207,9 +211,10 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={signOut}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive/70 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
+              tooltip="Log out"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive/70 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive group-data-[collapsible=icon]:justify-center"
             >
-              <LogOut className="h-[18px] w-[18px]" />
+              <LogOut className="shrink-0" />
               {!collapsed && <span>Log out</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>

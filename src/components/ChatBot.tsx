@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, X, Send, User, Bot, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import ReactMarkdown from "react-markdown";
 
 export interface Message {
@@ -38,17 +37,14 @@ export function ChatBot() {
     }
   }, [messages, isOpen]);
 
-  const generateGeminiResponse = async (userText: string) => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const generateOpenRouterResponse = async (userText: string) => {
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
     
     if (!apiKey) {
       return "I'm currently unable to connect to my brain (API Key missing). Please contact support.";
     }
 
     try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
       const systemPrompt = `
         You are an intelligent support assistant for "Pravesh" (Parivesh-3.0), an Environmental Clearance Portal.
         Your goal is to assist Project Proponents, Scrutiny Teams, and other users with the application process.
@@ -77,13 +73,32 @@ export function ChatBot() {
         - Do not hallucinate features not mentioned above.
       `;
 
-      const prompt = `${systemPrompt}\n\nUser Question: ${userText}`;
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "HTTP-Referer": window.location.origin,
+          "X-Title": "Parivesh-3.0",
+        },
+        body: JSON.stringify({
+          model: "stepfun/step-3.5-flash:free",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userText },
+          ],
+        }),
+      });
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
+      const data = await response.json();
+      if (!response.ok) {
+        const apiError = data?.error?.message || "Unknown OpenRouter error";
+        throw new Error(apiError);
+      }
+
+      return data?.choices?.[0]?.message?.content || "I could not generate a response. Please try again.";
     } catch (error: any) {
-      console.error("Gemini API Error:", error);
+      console.error("OpenRouter API Error:", error);
       return `Error: ${error.message || "Unknown error occurred"}. Please check your connection or API key.`;
     }
   };
@@ -102,7 +117,7 @@ export function ChatBot() {
     setInputValue("");
     setIsLoading(true);
 
-    const botResponseText = await generateGeminiResponse(newUserMessage.text);
+    const botResponseText = await generateOpenRouterResponse(newUserMessage.text);
 
     setMessages((prev) => [
       ...prev,
@@ -131,7 +146,7 @@ export function ChatBot() {
               <Bot className="h-6 w-6" />
               <div>
                 <CardTitle className="text-base">Pravesh AI Assistant</CardTitle>
-                <p className="text-xs text-primary-foreground/80">Powered by Gemini</p>
+                <p className="text-xs text-primary-foreground/80">Powered by OpenRouter</p>
               </div>
             </div>
             <Button 
@@ -151,7 +166,7 @@ export function ChatBot() {
                   <div
                     key={msg.id}
                     className={cn(
-                      "flex max-w-[80%] rounded-lg p-3 text-sm",
+                      "max-w-[90%] rounded-lg p-3 text-sm break-words leading-relaxed",
                       msg.sender === "user"
                         ? "ml-auto bg-primary text-primary-foreground rounded-br-none"
                         : "bg-muted text-foreground rounded-bl-none"
@@ -175,7 +190,7 @@ export function ChatBot() {
                   </div>
                 ))}
                 {isLoading && (
-                  <div className="flex max-w-[80%] rounded-lg p-3 text-sm bg-muted text-foreground rounded-bl-none items-center gap-2">
+                  <div className="flex max-w-[90%] rounded-lg p-3 text-sm bg-muted text-foreground rounded-bl-none items-center gap-2 break-words">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Thinking...
                   </div>

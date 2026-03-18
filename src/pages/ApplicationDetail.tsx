@@ -18,7 +18,7 @@ import { saveAs } from "file-saver";
 import { exportAsPDF, exportAsWord } from "@/lib/exportUtils";
 import { useTranslation } from "react-i18next";
 
-type AppStatus = "draft" | "submitted" | "under_scrutiny" | "essential_document_sought" | "referred" | "final_minutes_issued" | "rejected";
+type AppStatus = "draft" | "submitted" | "under_scrutiny" | "essential_document_sought" | "referred" | "mom_generated" | "finalized";
 
 interface AppDoc {
   id: string;
@@ -57,7 +57,7 @@ export default function ApplicationDetail() {
 
   useEffect(() => {
     // Fetch EDS points
-    supabase.from("eds_points").select("*").order("point_text").then(({ data }) => {
+    supabase.from("eds_deficiency_points").select("*").order("point_text").then(({ data }) => {
       if (data) setEdsPoints(data);
     });
   }, []);
@@ -212,8 +212,8 @@ export default function ApplicationDetail() {
   };
 
   const handleEdsFlag = () => {
-    if (selectedEdsPoints.size === 0 && !remarks.trim()) {
-      toast.error("Please select at least one EDS point or add remarks");
+    if (selectedEdsPoints.size === 0) {
+      toast.error("Please select at least one EDS point");
       return;
     }
 
@@ -223,6 +223,7 @@ export default function ApplicationDetail() {
       .map(p => p.point_text);
 
     const edsRemarks = [
+      "EDS Deficiency Points:",
       ...selectedPointTexts.map((t, i) => `${i + 1}. ${t}`),
       remarks.trim() ? `\nAdditional Remarks: ${remarks.trim()}` : "",
     ].filter(Boolean).join("\n");
@@ -245,20 +246,38 @@ export default function ApplicationDetail() {
 
   const handleEdsResubmit = async () => {
     if (!app || !user) return;
+    if (edsFiles.length === 0) {
+      toast.error("Please upload at least one file before resubmitting");
+      return;
+    }
     setUploading(true);
+    let uploadedCount = 0;
 
     for (const file of edsFiles) {
       const filePath = `${user.id}/${app.id}/${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("application-documents").upload(filePath, file);
-      if (!uploadError) {
-        await supabase.from("application_documents").insert({
-          application_id: app.id,
-          file_name: file.name,
-          file_path: filePath,
-          file_type: file.type,
-          file_size: file.size,
-        });
+      const { error: uploadError } = await supabase.storage.from("application-documents").upload(filePath, file, { upsert: true });
+      if (uploadError) {
+        toast.error(`Failed to upload ${file.name}`);
+        continue;
       }
+      const { error: insertError } = await supabase.from("application_documents").insert({
+        application_id: app.id,
+        file_name: file.name,
+        file_path: filePath,
+        file_type: file.type,
+        file_size: file.size,
+      });
+      if (insertError) {
+        toast.error(`Failed to register ${file.name}`);
+        continue;
+      }
+      uploadedCount += 1;
+    }
+
+    if (uploadedCount === 0) {
+      setUploading(false);
+      toast.error("No files were uploaded successfully");
+      return;
     }
 
     await supabase.from("applications").update({ status: "submitted" }).eq("id", app.id);
@@ -267,7 +286,7 @@ export default function ApplicationDetail() {
       from_status: "essential_document_sought",
       to_status: "submitted",
       changed_by: user.id,
-      remarks: "Resubmitted with additional documents",
+      remarks: `Resubmitted with additional documents (${uploadedCount} file(s))`,
     });
 
     setUploading(false);
@@ -355,8 +374,11 @@ export default function ApplicationDetail() {
       {/* Project Info */}
       <Card>
         <CardHeader><CardTitle className="font-display text-lg">{t("Project Information")}</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 text-sm">
-          <div><strong>{t("Description")}:</strong> {app.project_description || "—"}</div>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 text-sm">
+          <div><strong>{t("Application ID")}:</strong> {app.id}</div>
+          <div><strong>{t("Sector")}:</strong> {sectorName || "—"}</div>
+          <div><strong>{t("Category")}:</strong> {app.category || "—"}</div>
+          <div><strong>{t("Status")}:</strong> {app.status.replace(/_/g, " ")}</div>
           <div><strong>{t("Location")}:</strong> {app.project_location || "—"}</div>
           <div><strong>{t("Fee")}:</strong> ₹{app.fee_amount || 0}</div>
           <div>
@@ -369,6 +391,9 @@ export default function ApplicationDetail() {
           </div>
           <div><strong>{t("Created")}:</strong> {new Date(app.created_at).toLocaleString()}</div>
           <div><strong>{t("Updated")}:</strong> {new Date(app.updated_at).toLocaleString()}</div>
+          <div className="md:col-span-2 xl:col-span-3">
+            <strong>{t("Description")}:</strong> {app.project_description || "—"}
+          </div>
         </CardContent>
       </Card>
 
